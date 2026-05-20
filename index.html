@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strudel AI — ROI Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F5F2EC;
+    --bg2: #EDE9E0;
+    --bg3: #E4DFD4;
+    --ink: #1A1714;
+    --ink2: #5C5852;
+    --ink3: #9B9690;
+    --accent: #2D6A4F;
+    --accent-light: #D8EDE4;
+    --accent-text: #1B4332;
+    --warn: #C04A1F;
+    --border: rgba(26,23,20,0.12);
+    --border2: rgba(26,23,20,0.06);
+    --radius: 12px;
+    --radius-lg: 20px;
+  }
+
+  html { font-size: 16px; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* ── Layout ── */
+  .page {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+
+  /* ── Header ── */
+  .wordmark {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 56px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .wordmark::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+
+  .hero-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(36px, 6vw, 58px);
+    font-weight: 400;
+    line-height: 1.1;
+    color: var(--ink);
+    margin-bottom: 20px;
+    letter-spacing: -.02em;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .hero-sub {
+    font-size: 17px;
+    color: var(--ink2);
+    font-weight: 300;
+    max-width: 500px;
+    line-height: 1.65;
+    margin-bottom: 56px;
+  }
+
+  /* ── Divider ── */
+  .rule {
+    height: 1px;
+    background: var(--border);
+    margin: 40px 0;
+  }
+
+  /* ── Section label ── */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 28px;
+  }
+
+  /* ── Sliders ── */
+  .sliders {
+    display: grid;
+    gap: 28px;
+    margin-bottom: 40px;
+  }
+
+  .slider-row {
+    display: grid;
+    gap: 10px;
+  }
+
+  .slider-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  .slider-meta label {
+    font-size: 14px;
+    color: var(--ink2);
+    font-weight: 400;
+  }
+
+  .slider-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    min-width: 72px;
+    text-align: right;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 2px;
+    background: var(--bg3);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    transition: background .2s;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--ink);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform .15s, background .15s;
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--border);
+  }
+
+  input[type=range]::-webkit-slider-thumb:hover {
+    background: var(--accent);
+    transform: scale(1.15);
+  }
+
+  input[type=range]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--ink);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--border);
+  }
+
+  /* ── Results ── */
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .result-card {
+    background: var(--bg2);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    border: 1px solid var(--border2);
+    transition: transform .2s;
+  }
+
+  .result-card.primary {
+    background: var(--accent);
+    border-color: transparent;
+  }
+
+  .result-card:hover { transform: translateY(-2px); }
+
+  .result-card-label {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--ink3);
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .result-card.primary .result-card-label {
+    color: rgba(255,255,255,0.65);
+  }
+
+  .result-card-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    color: var(--ink);
+    line-height: 1;
+    letter-spacing: -.01em;
+  }
+
+  .result-card.primary .result-card-value {
+    color: #fff;
+  }
+
+  /* ── Breakdown table ── */
+  .breakdown {
+    background: var(--bg2);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border2);
+    overflow: hidden;
+    margin-bottom: 36px;
+  }
+
+  .breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border2);
+  }
+
+  .breakdown-row:last-child { border-bottom: none; }
+
+  .breakdown-row.total {
+    background: var(--bg3);
+    font-weight: 500;
+  }
+
+  .breakdown-row span:first-child { color: var(--ink2); }
+  .breakdown-row span:last-child {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--ink);
+  }
+
+  .breakdown-row.total span:last-child { color: var(--accent-text); }
+
+  /* ── Assumption note ── */
+  .assumption {
+    display: flex;
+    gap: 10px;
+    padding: 14px 18px;
+    background: var(--accent-light);
+    border-radius: var(--radius);
+    margin-bottom: 36px;
+    border: 1px solid rgba(45,106,79,0.15);
+  }
+
+  .assumption-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 7px;
+  }
+
+  .assumption p {
+    font-size: 13px;
+    color: var(--accent-text);
+    line-height: 1.55;
+  }
+
+  /* ── CTA ── */
+  .cta-block {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 28px 32px;
+    background: var(--ink);
+    border-radius: var(--radius-lg);
+    flex-wrap: wrap;
+  }
+
+  .cta-left p:first-child {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: #fff;
+    margin-bottom: 4px;
+    line-height: 1.25;
+  }
+
+  .cta-left p:last-child {
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+  }
+
+  .cta-btn {
+    background: #fff;
+    color: var(--ink);
+    border: none;
+    border-radius: var(--radius);
+    padding: 13px 24px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: background .15s, transform .15s;
+    display: inline-block;
+  }
+
+  .cta-btn:hover {
+    background: var(--accent-light);
+    transform: scale(1.02);
+  }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .footer p {
+    font-size: 12px;
+    color: var(--ink3);
+  }
+
+  .footer a {
+    color: var(--ink3);
+    text-decoration: none;
+  }
+
+  .footer a:hover { color: var(--accent); }
+
+  /* ── Animate on load ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-label  { animation: fadeUp .5s ease both; }
+  h1           { animation: fadeUp .5s .08s ease both; }
+  .hero-sub    { animation: fadeUp .5s .16s ease both; }
+  .sliders     { animation: fadeUp .5s .24s ease both; }
+  .results-grid{ animation: fadeUp .5s .32s ease both; }
+  .breakdown   { animation: fadeUp .5s .38s ease both; }
+  .cta-block   { animation: fadeUp .5s .44s ease both; }
+
+  @media (max-width: 520px) {
+    .results-grid { grid-template-columns: 1fr 1fr; }
+    .result-card.primary { grid-column: 1 / -1; }
+    .cta-block { flex-direction: column; align-items: flex-start; }
+    h1 { font-size: 36px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="wordmark">Strudel AI</div>
+
+  <p class="hero-label">ROI Calculator</p>
+  <h1>How much is slow triage <em>really</em> costing you?</h1>
+  <p class="hero-sub">Move the sliders to see exactly how much engineering time and budget your team loses to manual ticket investigation — and what Strudel gets back.</p>
+
+  <div class="rule"></div>
+
+  <p class="section-label">Your team</p>
+
+  <div class="sliders">
+    <div class="slider-row">
+      <div class="slider-meta">
+        <label for="eng">Engineers on your team</label>
+        <span class="slider-val" id="eng-out">15</span>
+      </div>
+      <input type="range" id="eng" min="2" max="150" step="1" value="15">
+    </div>
+
+    <div class="slider-row">
+      <div class="slider-meta">
+        <label for="tickets">Support tickets touching engineering / week</label>
+        <span class="slider-val" id="tickets-out">20</span>
+      </div>
+      <input type="range" id="tickets" min="1" max="300" step="1" value="20">
+    </div>
+
+    <div class="slider-row">
+      <div class="slider-meta">
+        <label for="rate">Average engineer hourly cost (fully loaded)</label>
+        <span class="slider-val" id="rate-out">$120 / hr</span>
+      </div>
+      <input type="range" id="rate" min="50" max="400" step="5" value="120">
+    </div>
+
+    <div class="slider-row">
+      <div class="slider-meta">
+        <label for="hours">Hours per ticket on triage &amp; investigation</label>
+        <span class="slider-val" id="hours-out">3.0 hrs</span>
+      </div>
+      <input type="range" id="hours" min="0.5" max="16" step="0.5" value="3">
+    </div>
+  </div>
+
+  <div class="rule"></div>
+
+  <p class="section-label">Your savings with Strudel</p>
+
+  <div class="results-grid">
+    <div class="result-card">
+      <p class="result-card-label">Hours reclaimed per week</p>
+      <p class="result-card-value" id="hrs-saved">—</p>
+    </div>
+    <div class="result-card">
+      <p class="result-card-label">Saved per month</p>
+      <p class="result-card-value" id="monthly-saved">—</p>
+    </div>
+    <div class="result-card primary">
+      <p class="result-card-label">Saved per year</p>
+      <p class="result-card-value" id="yearly-saved">—</p>
+    </div>
+  </div>
+
+  <div class="breakdown">
+    <div class="breakdown-row">
+      <span>Current weekly triage cost</span>
+      <span id="b-current">—</span>
+    </div>
+    <div class="breakdown-row">
+      <span>Strudel triage reduction</span>
+      <span>75%</span>
+    </div>
+    <div class="breakdown-row">
+      <span>Weekly cost after Strudel</span>
+      <span id="b-after">—</span>
+    </div>
+    <div class="breakdown-row total">
+      <span>Net weekly saving</span>
+      <span id="b-net">—</span>
+    </div>
+  </div>
+
+  <div class="assumption">
+    <div class="assumption-dot"></div>
+    <p>Based on Strudel's customer data showing a 75% average reduction in triage and investigation time. Individual results depend on ticket complexity and team setup.</p>
+  </div>
+
+  <div class="cta-block">
+    <div class="cta-left">
+      <p id="cta-headline">See these savings in your team.</p>
+      <p>Book a 20-minute demo — no pitch, just the product.</p>
+    </div>
+    <a class="cta-btn" href="https://strudel.io" target="_blank">Book a demo</a>
+  </div>
+
+  <div class="footer">
+    <p>© 2025 Strudel AI Inc. — <a href="https://strudel.io" target="_blank">strudel.io</a></p>
+    <p>Numbers based on published customer outcomes.</p>
+  </div>
+
+</div>
+
+<script>
+  function fmt(n) {
+    return '$' + Math.round(n).toLocaleString('en-US');
+  }
+
+  function calc() {
+    var eng     = +document.getElementById('eng').value;
+    var tickets = +document.getElementById('tickets').value;
+    var rate    = +document.getElementById('rate').value;
+    var hours   = +document.getElementById('hours').value;
+
+    document.getElementById('eng-out').textContent     = eng;
+    document.getElementById('tickets-out').textContent = tickets;
+    document.getElementById('rate-out').textContent    = '$' + rate + ' / hr';
+    document.getElementById('hours-out').textContent   = hours.toFixed(1) + ' hrs';
+
+    var currentWeekly = tickets * hours * rate;
+    var savedWeekly   = currentWeekly * 0.75;
+    var afterWeekly   = currentWeekly * 0.25;
+    var hrsWeekly     = tickets * hours * 0.75;
+    var monthly       = savedWeekly * 4.33;
+    var yearly        = savedWeekly * 52;
+
+    document.getElementById('hrs-saved').textContent    = Math.round(hrsWeekly) + ' hrs';
+    document.getElementById('monthly-saved').textContent = fmt(monthly);
+    document.getElementById('yearly-saved').textContent  = fmt(yearly);
+
+    document.getElementById('b-current').textContent = fmt(currentWeekly) + ' / wk';
+    document.getElementById('b-after').textContent   = fmt(afterWeekly)   + ' / wk';
+    document.getElementById('b-net').textContent     = fmt(savedWeekly)   + ' / wk';
+
+    var yrK = Math.round(yearly / 1000);
+    document.getElementById('cta-headline').textContent =
+      'Your team could reclaim $' + yrK + 'K this year.';
+  }
+
+  ['eng','tickets','rate','hours'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', calc);
+  });
+
+  calc();
+</script>
+</body>
+</html>
